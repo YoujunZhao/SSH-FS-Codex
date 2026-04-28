@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import * as vscode from 'vscode';
 
+import { findRemoteFilesDeletedLocally } from './delete-plan';
 import { ensureLocalDirectory, fileExists, hashBuffer, hashLocalFile, readLocalDirectoryRecursively } from './fs-utils';
 import type { SyncReport } from './types';
 
@@ -70,7 +71,7 @@ export async function syncRemoteToLocal(options: {
   localRoot: string;
   maxFileSizeBytes: number;
 }): Promise<SyncReport> {
-  const report: SyncReport = { created: 0, updated: 0, skipped: 0, skippedEntries: [] };
+  const report: SyncReport = { created: 0, updated: 0, deleted: 0, skipped: 0, skippedEntries: [] };
   await ensureLocalDirectory(options.localRoot);
 
   const remoteFiles = await listRemoteFiles(options.remoteRoot);
@@ -106,8 +107,9 @@ export async function syncLocalToRemote(options: {
   remoteRoot: vscode.Uri;
   maxFileSizeBytes: number;
 }): Promise<SyncReport> {
-  const report: SyncReport = { created: 0, updated: 0, skipped: 0, skippedEntries: [] };
+  const report: SyncReport = { created: 0, updated: 0, deleted: 0, skipped: 0, skippedEntries: [] };
   const localFiles = await readLocalDirectoryRecursively(options.localRoot);
+  const remoteFiles = await listRemoteFiles(options.remoteRoot);
 
   for (const relativePath of localFiles) {
     const localPath = path.join(options.localRoot, relativePath);
@@ -136,6 +138,20 @@ export async function syncLocalToRemote(options: {
         report.created += 1;
       }
     }
+  }
+
+  for (const relativePath of findRemoteFilesDeletedLocally({ remoteFiles, localFiles })) {
+    const remoteUri = joinRemote(options.remoteRoot, relativePath);
+    const remoteStat = await vscode.workspace.fs.stat(remoteUri);
+
+    if (remoteStat.size > options.maxFileSizeBytes) {
+      report.skipped += 1;
+      report.skippedEntries.push(relativePath);
+      continue;
+    }
+
+    await vscode.workspace.fs.delete(remoteUri, { recursive: false, useTrash: false });
+    report.deleted += 1;
   }
 
   return report;

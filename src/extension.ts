@@ -112,7 +112,7 @@ async function syncWorkspaceToMirror(): Promise<void> {
         localRoot: mapping.mirrorPath,
         maxFileSizeBytes: config.maxFileSizeBytes
       });
-      void vscode.window.setStatusBarMessage(`Codex SSH FS Bridge synced ${folder.name}: +${report.created} ~${report.updated} (${report.skipped} skipped)`, 5000);
+      void vscode.window.setStatusBarMessage(`Codex SSH FS Bridge synced ${folder.name}: +${report.created} ~${report.updated} -${report.deleted} (${report.skipped} skipped)`, 5000);
     });
   }
 
@@ -185,7 +185,7 @@ async function syncMirrorToRemote(): Promise<void> {
         remoteRoot: vscode.Uri.parse(folder.remoteUri),
         maxFileSizeBytes: config.maxFileSizeBytes
       });
-      void vscode.window.setStatusBarMessage(`Codex SSH FS Bridge pushed ${folder.name}: +${report.created} ~${report.updated} (${report.skipped} skipped)`, 5000);
+      void vscode.window.setStatusBarMessage(`Codex SSH FS Bridge pushed ${folder.name}: +${report.created} ~${report.updated} -${report.deleted} (${report.skipped} skipped)`, 5000);
     });
   }
 
@@ -287,7 +287,7 @@ async function syncMetadataBackedWorkspace(metadata: MirrorMetadata, config: Bri
         localRoot: folder.mirrorPath,
         maxFileSizeBytes: config.maxFileSizeBytes
       });
-      void vscode.window.setStatusBarMessage(`Codex SSH FS Bridge refreshed ${folder.name}: +${report.created} ~${report.updated} (${report.skipped} skipped)`, 5000);
+      void vscode.window.setStatusBarMessage(`Codex SSH FS Bridge refreshed ${folder.name}: +${report.created} ~${report.updated} -${report.deleted} (${report.skipped} skipped)`, 5000);
     });
   }
 

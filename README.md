@@ -45,12 +45,12 @@ When `mirrorsRoot` is empty, mirrors are stored in `~/.codex-sshfs-bridge/mirror
 codex
 ```
 
-5. After Codex edits files, run `Codex SSH FS Bridge: Sync Local Mirror Back to Remote` from the mirror workspace.
+5. After Codex edits files, run `Codex SSH FS Bridge: Sync Local Mirror Back to Remote` from the mirror workspace. Files deleted from the mirror are deleted from the remote workspace during that push, except files skipped by the configured size limit.
 
 ## Limitations
 
 - Sync is explicit, not live. Pull before starting Codex and push after reviewing Codex edits.
-- Deletes are not propagated yet; the push command creates or updates files.
+- Delete propagation is explicit and happens only when you run the push command from a mirror workspace.
 - Symbolic links are skipped.
 - Large files over `codexSshfsBridge.maxFileSizeMb` are skipped.
 - The exact URI scheme depends on the SSH FS extension; add it to `allowedSchemes` if needed.

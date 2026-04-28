@@ -34,6 +34,7 @@ export interface MirrorLayout {
 export interface SyncReport {
   created: number;
   updated: number;
+  deleted: number;
   skipped: number;
   skippedEntries: string[];
 }

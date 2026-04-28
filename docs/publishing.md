@@ -44,4 +44,4 @@
 
 - **Purpose**: Explain that the extension mirrors SSH FS workspaces into local folders so Codex CLI can work on them.
 - **How it works**: Document the sync-down / edit locally / sync-up workflow.
-- **Safety notes**: Mention that sync is explicit, symlinks are skipped, and deletions are not mirrored automatically.
+- **Safety notes**: Mention that sync is explicit, symlinks are skipped, and deletions are only mirrored when the user runs the push command.
