@@ -78,6 +78,8 @@ codex
   "codexSshfsBridge.allowedSchemes": ["ssh", "sshfs", "sftp"],
   "codexSshfsBridge.autoPromptOnRemoteWorkspace": true,
   "codexSshfsBridge.openMirrorAfterSync": true,
+  "codexSshfsBridge.showProgressNotifications": false,
+  "codexSshfsBridge.showStatusBarItem": false,
   "codexSshfsBridge.maxFileSizeMb": 16
 }
 ```
@@ -86,11 +88,14 @@ codex
 - `allowedSchemes`: 识别哪些 VS Code URI scheme 为 SSH FS workspace。
 - `autoPromptOnRemoteWorkspace`: 打开远程 workspace 时是否自动提示创建 mirror。
 - `openMirrorAfterSync`: 同步完成后是否自动打开本地 mirror workspace。
+- `showProgressNotifications`: pull/push 同步时是否显示可取消的 VS Code 进度通知。默认是 `false`，同步会安静运行，只显示完成或错误消息。
+- `showStatusBarItem`: 是否显示 VS Code 左下角常驻入口。默认是 `false`，如果你想要可点击的状态栏快捷入口再打开。
 - `maxFileSizeMb`: 超过该大小的文件不会同步。
 
 ## 注意事项
 
 - 同步不是实时的。开始 Codex 前先 pull 到 mirror，确认修改后再 push 回远程。
+- 默认 UI 是安静模式。如果你想看到同步进度通知或左下角常驻入口，可以在 VS Code settings 里打开 `showProgressNotifications` 或 `showStatusBarItem`。
 - 从 mirror push 回远程时，本地删除的文件也会从远程删除。
 - 超过 `maxFileSizeMb` 的文件会跳过，避免误处理大文件。
 - 符号链接会跳过。

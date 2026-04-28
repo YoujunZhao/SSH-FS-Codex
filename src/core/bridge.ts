@@ -11,17 +11,25 @@ function joinRemote(base: vscode.Uri, relativePath: string): vscode.Uri {
   return relativePath ? vscode.Uri.joinPath(base, ...relativePath.split(path.sep)) : base;
 }
 
-async function listRemoteFiles(root: vscode.Uri, relativePath = ''): Promise<string[]> {
+function throwIfCancelled(token: vscode.CancellationToken | undefined): void {
+  if (token?.isCancellationRequested) {
+    throw new vscode.CancellationError();
+  }
+}
+
+async function listRemoteFiles(root: vscode.Uri, relativePath = '', token?: vscode.CancellationToken): Promise<string[]> {
+  throwIfCancelled(token);
   const files: string[] = [];
   const entries = await vscode.workspace.fs.readDirectory(joinRemote(root, relativePath));
 
   for (const [name, type] of entries) {
+    throwIfCancelled(token);
     const childRelativePath = relativePath ? path.join(relativePath, name) : name;
     if (type & vscode.FileType.SymbolicLink) {
       continue;
     }
     if (type & vscode.FileType.Directory) {
-      files.push(...await listRemoteFiles(root, childRelativePath));
+      files.push(...await listRemoteFiles(root, childRelativePath, token));
       continue;
     }
     if (type & vscode.FileType.File) {
@@ -70,12 +78,14 @@ export async function syncRemoteToLocal(options: {
   remoteRoot: vscode.Uri;
   localRoot: string;
   maxFileSizeBytes: number;
+  cancellationToken?: vscode.CancellationToken;
 }): Promise<SyncReport> {
   const report: SyncReport = { created: 0, updated: 0, deleted: 0, skipped: 0, skippedEntries: [] };
   await ensureLocalDirectory(options.localRoot);
 
-  const remoteFiles = await listRemoteFiles(options.remoteRoot);
+  const remoteFiles = await listRemoteFiles(options.remoteRoot, '', options.cancellationToken);
   for (const relativePath of remoteFiles) {
+    throwIfCancelled(options.cancellationToken);
     const remoteUri = joinRemote(options.remoteRoot, relativePath);
     const localPath = path.join(options.localRoot, relativePath);
     const stat = await vscode.workspace.fs.stat(remoteUri);
@@ -106,12 +116,14 @@ export async function syncLocalToRemote(options: {
   localRoot: string;
   remoteRoot: vscode.Uri;
   maxFileSizeBytes: number;
+  cancellationToken?: vscode.CancellationToken;
 }): Promise<SyncReport> {
   const report: SyncReport = { created: 0, updated: 0, deleted: 0, skipped: 0, skippedEntries: [] };
   const localFiles = await readLocalDirectoryRecursively(options.localRoot);
-  const remoteFiles = await listRemoteFiles(options.remoteRoot);
+  const remoteFiles = await listRemoteFiles(options.remoteRoot, '', options.cancellationToken);
 
   for (const relativePath of localFiles) {
+    throwIfCancelled(options.cancellationToken);
     const localPath = path.join(options.localRoot, relativePath);
     const localStat = await fs.stat(localPath);
     if (localStat.size > options.maxFileSizeBytes) {
@@ -141,6 +153,7 @@ export async function syncLocalToRemote(options: {
   }
 
   for (const relativePath of findRemoteFilesDeletedLocally({ remoteFiles, localFiles })) {
+    throwIfCancelled(options.cancellationToken);
     const remoteUri = joinRemote(options.remoteRoot, relativePath);
     const remoteStat = await vscode.workspace.fs.stat(remoteUri);
 

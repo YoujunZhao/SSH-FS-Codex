@@ -23,7 +23,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       metadata: environment.metadata
     });
 
-    updateStatusBar(statusBarItem, mode, environment.remoteFolders.length);
+    updateStatusBar(statusBarItem, mode, environment.remoteFolders.length, getConfiguration().showStatusBarItem);
   };
 
   context.subscriptions.push(
@@ -44,6 +44,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
       void refreshStatusBar();
+    }),
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('codexSshfsBridge')) {
+        void refreshStatusBar();
+      }
     })
   );
 
@@ -106,11 +111,12 @@ async function syncWorkspaceToMirror(): Promise<void> {
       continue;
     }
 
-    await withProgress(`Syncing ${folder.name} to local mirror`, async () => {
+    await withOptionalProgress(config, `Syncing ${folder.name} to local mirror`, async (cancellationToken) => {
       const report = await syncRemoteToLocal({
         remoteRoot: vscode.Uri.parse(folder.uri),
         localRoot: mapping.mirrorPath,
-        maxFileSizeBytes: config.maxFileSizeBytes
+        maxFileSizeBytes: config.maxFileSizeBytes,
+        cancellationToken
       });
       void vscode.window.setStatusBarMessage(`Codex SSH FS Bridge synced ${folder.name}: +${report.created} ~${report.updated} -${report.deleted} (${report.skipped} skipped)`, 5000);
     });
@@ -179,11 +185,12 @@ async function syncMirrorToRemote(): Promise<void> {
   }
 
   for (const folder of environment.metadata.folders) {
-    await withProgress(`Syncing ${folder.name} back to remote`, async () => {
+    await withOptionalProgress(config, `Syncing ${folder.name} back to remote`, async (cancellationToken) => {
       const report = await syncLocalToRemote({
         localRoot: folder.mirrorPath,
         remoteRoot: vscode.Uri.parse(folder.remoteUri),
-        maxFileSizeBytes: config.maxFileSizeBytes
+        maxFileSizeBytes: config.maxFileSizeBytes,
+        cancellationToken
       });
       void vscode.window.setStatusBarMessage(`Codex SSH FS Bridge pushed ${folder.name}: +${report.created} ~${report.updated} -${report.deleted} (${report.skipped} skipped)`, 5000);
     });
@@ -213,10 +220,15 @@ async function showMirrorStatus(): Promise<void> {
   void vscode.window.showInformationMessage('Codex SSH FS Bridge is idle: no supported remote or mirror workspace detected.');
 }
 
-function updateStatusBar(statusBarItem: vscode.StatusBarItem, mode: WorkspaceMode, remoteFolderCount: number): void {
+function updateStatusBar(statusBarItem: vscode.StatusBarItem, mode: WorkspaceMode, remoteFolderCount: number, showStatusBarItem: boolean): void {
+  if (!showStatusBarItem) {
+    statusBarItem.hide();
+    return;
+  }
+
   if (mode === 'remote') {
-    statusBarItem.text = `$(cloud-download) SSH FS → Codex (${remoteFolderCount})`;
-    statusBarItem.tooltip = 'Sync the SSH FS workspace into a local mirror that Codex CLI can use.';
+    statusBarItem.text = remoteFolderCount > 1 ? `$(cloud-download) Codex SSH FS (${remoteFolderCount})` : '$(cloud-download) Codex SSH FS';
+    statusBarItem.tooltip = `Sync ${remoteFolderCount} SSH FS workspace folder${remoteFolderCount === 1 ? '' : 's'} into a local mirror that Codex CLI can use.`;
     statusBarItem.show();
     return;
   }
@@ -246,6 +258,8 @@ function getConfiguration(): BridgeConfiguration {
     allowedSchemes,
     autoPromptOnRemoteWorkspace: config.get<boolean>('autoPromptOnRemoteWorkspace', true),
     openMirrorAfterSync: config.get<boolean>('openMirrorAfterSync', true),
+    showProgressNotifications: config.get<boolean>('showProgressNotifications', false),
+    showStatusBarItem: config.get<boolean>('showStatusBarItem', false),
     maxFileSizeBytes: Math.max(1, maxFileSizeMb) * 1024 * 1024
   };
 }
@@ -281,11 +295,12 @@ async function readCurrentMirrorMetadata(): Promise<MirrorMetadata | undefined> 
 
 async function syncMetadataBackedWorkspace(metadata: MirrorMetadata, config: BridgeConfiguration): Promise<void> {
   for (const folder of metadata.folders) {
-    await withProgress(`Refreshing ${folder.name} from remote`, async () => {
+    await withOptionalProgress(config, `Refreshing ${folder.name} from remote`, async (cancellationToken) => {
       const report = await syncRemoteToLocal({
         remoteRoot: vscode.Uri.parse(folder.remoteUri),
         localRoot: folder.mirrorPath,
-        maxFileSizeBytes: config.maxFileSizeBytes
+        maxFileSizeBytes: config.maxFileSizeBytes,
+        cancellationToken
       });
       void vscode.window.setStatusBarMessage(`Codex SSH FS Bridge refreshed ${folder.name}: +${report.created} ~${report.updated} -${report.deleted} (${report.skipped} skipped)`, 5000);
     });
@@ -306,13 +321,21 @@ function layoutFromMetadata(metadata: MirrorMetadata): MirrorLayout {
   };
 }
 
-async function withProgress<T>(title: string, task: () => Promise<T>): Promise<T> {
+async function withOptionalProgress<T>(
+  config: BridgeConfiguration,
+  title: string,
+  task: (cancellationToken: vscode.CancellationToken | undefined) => Promise<T>
+): Promise<T> {
+  if (!config.showProgressNotifications) {
+    return task(undefined);
+  }
+
   return vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
       title,
-      cancellable: false
+      cancellable: true
     },
-    task
+    (_progress, cancellationToken) => task(cancellationToken)
   );
 }

@@ -94,6 +94,16 @@
           "default": true,
           "markdownDescription": "Open the generated local mirror workspace after a successful sync down."
         },
+        "codexSshfsBridge.showProgressNotifications": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Show a cancellable VS Code notification while sync operations are running. When disabled, sync commands run quietly and only show completion or error messages."
+        },
+        "codexSshfsBridge.showStatusBarItem": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Show a persistent status bar entry for SSH FS Codex workspace detection. Disable this to keep the VS Code status bar uncluttered."
+        },
         "codexSshfsBridge.maxFileSizeMb": {
           "type": "number",
           "default": 16,

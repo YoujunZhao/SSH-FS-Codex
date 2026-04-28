@@ -44,6 +44,8 @@ export interface BridgeConfiguration {
   allowedSchemes: string[];
   autoPromptOnRemoteWorkspace: boolean;
   openMirrorAfterSync: boolean;
+  showProgressNotifications: boolean;
+  showStatusBarItem: boolean;
   maxFileSizeBytes: number;
 }
 

@@ -79,6 +79,8 @@ codex
   "codexSshfsBridge.allowedSchemes": ["ssh", "sshfs", "sftp"],
   "codexSshfsBridge.autoPromptOnRemoteWorkspace": true,
   "codexSshfsBridge.openMirrorAfterSync": true,
+  "codexSshfsBridge.showProgressNotifications": false,
+  "codexSshfsBridge.showStatusBarItem": false,
   "codexSshfsBridge.maxFileSizeMb": 16
 }
 ```
@@ -87,11 +89,14 @@ codex
 - `allowedSchemes`: VS Code URI schemes treated as SSH FS workspaces.
 - `autoPromptOnRemoteWorkspace`: Whether to prompt automatically when an SSH FS workspace opens.
 - `openMirrorAfterSync`: Whether to open the local mirror workspace after sync.
+- `showProgressNotifications`: Whether to show a cancellable sync notification while pull/push operations run. The default is `false`, so sync runs quietly and only reports completion or errors.
+- `showStatusBarItem`: Whether to show the persistent VS Code status bar entry. The default is `false`; turn it on if you want the clickable status shortcut.
 - `maxFileSizeMb`: Files larger than this size are skipped.
 
 ## Notes
 
 - Sync is explicit, not live. Pull before starting Codex and push after reviewing Codex edits.
+- The default UI is quiet. If you want progress notifications or a persistent status bar shortcut, enable `showProgressNotifications` or `showStatusBarItem` in VS Code settings.
 - When pushing from the mirror, files deleted locally are also deleted from the remote folder.
 - Files larger than `maxFileSizeMb` are skipped.
 - Symbolic links are skipped.
