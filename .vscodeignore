@@ -1,11 +1,16 @@
 .vscode/**
 .github/**
+.git/**
+.gitignore
 src/**
 test/**
 .eslintrc.json
+eslint.config.js
 tsconfig.json
 node_modules/**/.cache/**
 docs/**
 .omx/**
 .npm-cache/**
 package-lock.json
+dist/test/**
+dist/**/*.map
