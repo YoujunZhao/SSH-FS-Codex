@@ -1,0 +1,8 @@
+node_modules/
+out/
+dist/
+.tmp-vsix/
+.npm-cache/
+.omx/
+*.vsix
+.DS_Store

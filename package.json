@@ -1,0 +1,126 @@
+{
+  "name": "codex-sshfs-bridge",
+  "displayName": "Codex SSH FS Bridge",
+  "description": "Mirror VS Code SSH FS workspaces into a local folder that Codex CLI can use, then sync changes back to the remote workspace.",
+  "version": "0.0.1",
+  "publisher": "youjunzhao",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/youjunzhao/codex-sshfs-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/youjunzhao/codex-sshfs-bridge/issues"
+  },
+  "homepage": "https://github.com/youjunzhao/codex-sshfs-bridge#readme",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "codex",
+    "ssh",
+    "sshfs",
+    "sftp",
+    "remote",
+    "mirror",
+    "sync"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:codexSshfsBridge.syncWorkspaceToMirror",
+    "onCommand:codexSshfsBridge.openMirrorWorkspace",
+    "onCommand:codexSshfsBridge.syncMirrorToRemote",
+    "onCommand:codexSshfsBridge.showMirrorStatus"
+  ],
+  "main": "./dist/src/extension.js",
+  "capabilities": {
+    "virtualWorkspaces": {
+      "supported": "limited",
+      "description": "Provides commands that copy SSH FS virtual workspaces into a local mirror for Codex CLI and can push local mirror changes back to the remote workspace."
+    },
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "codexSshfsBridge.syncWorkspaceToMirror",
+        "title": "Codex SSH FS Bridge: Sync Workspace to Local Mirror"
+      },
+      {
+        "command": "codexSshfsBridge.openMirrorWorkspace",
+        "title": "Codex SSH FS Bridge: Open Local Mirror Workspace"
+      },
+      {
+        "command": "codexSshfsBridge.syncMirrorToRemote",
+        "title": "Codex SSH FS Bridge: Sync Local Mirror Back to Remote"
+      },
+      {
+        "command": "codexSshfsBridge.showMirrorStatus",
+        "title": "Codex SSH FS Bridge: Show Mirror Status"
+      }
+    ],
+    "configuration": {
+      "title": "Codex SSH FS Bridge",
+      "properties": {
+        "codexSshfsBridge.mirrorsRoot": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Optional absolute path for local mirrors. Leave blank to use `~/.codex-sshfs-bridge/mirrors`."
+        },
+        "codexSshfsBridge.allowedSchemes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "ssh",
+            "sshfs",
+            "sftp"
+          ],
+          "markdownDescription": "URI schemes that should be treated as SSH FS-style workspaces."
+        },
+        "codexSshfsBridge.autoPromptOnRemoteWorkspace": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Prompt to create a local mirror when a supported remote workspace is opened."
+        },
+        "codexSshfsBridge.openMirrorAfterSync": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Open the generated local mirror workspace after a successful sync down."
+        },
+        "codexSshfsBridge.maxFileSizeMb": {
+          "type": "number",
+          "default": 16,
+          "minimum": 1,
+          "markdownDescription": "Skip files larger than this size during mirror sync operations."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf out dist .tmp-vsix *.vsix",
+    "build": "tsc -p .",
+    "lint": "eslint --max-warnings=0 src test",
+    "test": "npm run build && node --test dist/test/*.test.js",
+    "check": "npm run lint && npm run test",
+    "package": "npm run package:vsix",
+    "package:vsix": "mkdir -p .tmp-vsix && npx @vscode/vsce package --out .tmp-vsix/codex-sshfs-bridge.vsix",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.26.0",
+    "@types/node": "^22.15.17",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/vsce": "^3.6.2",
+    "eslint": "^9.26.0",
+    "typescript": "^5.8.3"
+  }
+}

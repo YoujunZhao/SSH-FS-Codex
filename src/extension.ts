@@ -7,7 +7,7 @@ import { syncLocalToRemote, syncRemoteToLocal } from './core/bridge';
 import { detectWorkspaceMode, isSupportedRemoteScheme } from './core/detection';
 import { loadMirrorMetadata, refreshMirrorMetadata, writeWorkspaceFile } from './core/metadata';
 import { createMirrorLayout } from './core/pathing';
-import type { BridgeConfiguration, MirrorMetadata, RemoteFolderDescriptor, WorkspaceMode } from './core/types';
+import type { BridgeConfiguration, MirrorLayout, MirrorMetadata, RemoteFolderDescriptor, WorkspaceMode } from './core/types';
 
 const STATUS_BAR_COMMAND = 'codexSshfsBridge.showMirrorStatus';
 
@@ -149,6 +149,11 @@ async function openMirrorWorkspace(): Promise<void> {
   }
 
   const layout = createMirrorLayout(config.mirrorsRoot, getWorkspaceName(), environment.remoteFolders);
+  if (!environment.metadata) {
+    await syncWorkspaceToMirror();
+    return;
+  }
+
   await writeWorkspaceFile(layout);
   await refreshMirrorMetadata(layout, environment.metadata, getWorkspaceName());
   await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(layout.workspaceFilePath), { forceNewWindow: true });
@@ -184,13 +189,7 @@ async function syncMirrorToRemote(): Promise<void> {
     });
   }
 
-  const layout = createMirrorLayout(config.mirrorsRoot, environment.metadata.workspaceName, environment.metadata.folders.map((folder) => ({
-    name: folder.name,
-    uri: folder.remoteUri,
-    scheme: folder.remoteScheme,
-    authority: vscode.Uri.parse(folder.remoteUri).authority,
-    path: vscode.Uri.parse(folder.remoteUri).path
-  })));
+  const layout = layoutFromMetadata(environment.metadata);
   await refreshMirrorMetadata(layout, environment.metadata, environment.metadata.workspaceName);
   void vscode.window.showInformationMessage('Remote workspace updated from the local mirror.');
 }
@@ -292,16 +291,19 @@ async function syncMetadataBackedWorkspace(metadata: MirrorMetadata, config: Bri
     });
   }
 
-  const remoteFolders = metadata.folders.map((folder) => ({
-    name: folder.name,
-    uri: folder.remoteUri,
-    scheme: folder.remoteScheme,
-    authority: vscode.Uri.parse(folder.remoteUri).authority,
-    path: vscode.Uri.parse(folder.remoteUri).path
-  }));
-  const layout = createMirrorLayout(config.mirrorsRoot, metadata.workspaceName, remoteFolders);
+  const layout = layoutFromMetadata(metadata);
   await refreshMirrorMetadata(layout, metadata, metadata.workspaceName);
   void vscode.window.showInformationMessage('Local mirror refreshed from the remote SSH FS workspace.');
+}
+
+function layoutFromMetadata(metadata: MirrorMetadata): MirrorLayout {
+  return {
+    mirrorRoot: metadata.mirrorRoot,
+    foldersRoot: path.join(metadata.mirrorRoot, 'folders'),
+    workspaceFilePath: metadata.workspaceFilePath,
+    metadataPath: path.join(metadata.mirrorRoot, '.codex-sshfs-bridge', 'workspace.json'),
+    folders: metadata.folders
+  };
 }
 
 async function withProgress<T>(title: string, task: () => Promise<T>): Promise<T> {
