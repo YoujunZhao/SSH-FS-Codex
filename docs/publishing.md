@@ -38,7 +38,7 @@
 - Initial release of a bridge extension for SSH FS-style VS Code workspaces.
 - Added local mirror creation for remote folders that use `ssh`, `sshfs`, or `sftp` URI schemes.
 - Added commands to open the local mirror workspace, refresh it from remote, and push local changes back.
-- Added packaging, lint/test verification, and GitHub Actions CI.
+- Added packaging plus lint/test verification.
 
 ## Suggested GitHub repository sections
 
