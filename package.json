@@ -7,12 +7,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/youjunzhao/codex-sshfs-bridge.git"
+    "url": "https://github.com/YoujunZhao/SSH-FS-Codex.git"
   },
   "bugs": {
-    "url": "https://github.com/youjunzhao/codex-sshfs-bridge/issues"
+    "url": "https://github.com/YoujunZhao/SSH-FS-Codex/issues"
   },
-  "homepage": "https://github.com/youjunzhao/codex-sshfs-bridge#readme",
+  "homepage": "https://github.com/YoujunZhao/SSH-FS-Codex#readme",
   "engines": {
     "vscode": "^1.95.0"
   },

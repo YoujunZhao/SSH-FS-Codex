@@ -1,4 +1,4 @@
-# Codex SSH FS Bridge
+# SSH FS Codex
 
 Codex SSH FS Bridge makes SSH FS-backed VS Code workspaces usable with Codex CLI by creating a local mirror workspace. Codex works in the mirror on a normal filesystem path, while this extension reads and writes the remote workspace through VS Code's file-system APIs.
 
