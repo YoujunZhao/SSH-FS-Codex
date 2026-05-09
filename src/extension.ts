@@ -27,6 +27,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   };
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('codexSshfsBridge.prepareCodexWorkspace', async () => {
+      await prepareCodexWorkspace();
+      await refreshStatusBar();
+    }),
     vscode.commands.registerCommand('codexSshfsBridge.syncWorkspaceToMirror', async () => {
       await syncWorkspaceToMirror();
       await refreshStatusBar();
@@ -70,17 +74,21 @@ async function maybePromptForMirror(): Promise<void> {
   }
 
   const choice = await vscode.window.showInformationMessage(
-    'Codex SSH FS Bridge detected an SSH FS workspace. Create a local mirror so Codex can work on a local folder?',
-    'Create mirror',
+    'Codex SSH FS Bridge detected an SSH FS workspace. Prepare a local mirror workspace for Codex?',
+    'Prepare for Codex',
     'Later'
   );
 
-  if (choice === 'Create mirror') {
-    await syncWorkspaceToMirror();
+  if (choice === 'Prepare for Codex') {
+    await prepareCodexWorkspace();
   }
 }
 
-async function syncWorkspaceToMirror(): Promise<void> {
+async function prepareCodexWorkspace(): Promise<void> {
+  await syncWorkspaceToMirror({ forceOpenMirror: true });
+}
+
+async function syncWorkspaceToMirror(options: { forceOpenMirror?: boolean } = {}): Promise<void> {
   const config = getConfiguration();
   const environment = await getWorkspaceEnvironment();
   const mode = detectWorkspaceMode({ remoteFolders: environment.remoteFolders, metadata: environment.metadata });
@@ -125,18 +133,13 @@ async function syncWorkspaceToMirror(): Promise<void> {
   await refreshMirrorMetadata(layout, environment.metadata, getWorkspaceName());
   await writeWorkspaceFile(layout);
 
-  const openMirror = config.openMirrorAfterSync
-    ? 'Open mirror'
-    : undefined;
-
-  const choice = await vscode.window.showInformationMessage(
-    `Local mirror ready at ${layout.mirrorRoot}.`,
-    ...(openMirror ? [openMirror] : [])
-  );
-
-  if (choice === 'Open mirror') {
+  if (options.forceOpenMirror || config.openMirrorAfterSync) {
     await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(layout.workspaceFilePath), { forceNewWindow: true });
+    void vscode.window.showInformationMessage(`Codex mirror workspace opened: ${layout.mirrorRoot}`);
+    return;
   }
+
+  void vscode.window.showInformationMessage(`Local mirror ready at ${layout.mirrorRoot}.`);
 }
 
 async function openMirrorWorkspace(): Promise<void> {
@@ -156,7 +159,7 @@ async function openMirrorWorkspace(): Promise<void> {
 
   const layout = createMirrorLayout(config.mirrorsRoot, getWorkspaceName(), environment.remoteFolders);
   if (!environment.metadata) {
-    await syncWorkspaceToMirror();
+    await syncWorkspaceToMirror({ forceOpenMirror: true });
     return;
   }
 

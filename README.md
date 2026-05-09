@@ -5,7 +5,7 @@
   <a href="./README.md"><img alt="English README" src="https://img.shields.io/badge/README-English-green?style=for-the-badge"></a>
 </p>
 
-SSH FS Codex is a VS Code extension that makes SSH FS-backed workspaces usable with Codex CLI. It mirrors a VS Code SSH FS workspace into a real local folder, lets Codex work there, then syncs the local changes back to the SSH FS remote when you ask it to.
+SSH FS Codex is a VS Code extension that makes SSH FS-backed workspaces usable with Codex CLI or the VS Code Codex extension. It mirrors a VS Code SSH FS workspace into a real local folder, lets Codex work there, then syncs the local changes back to the SSH FS remote when you ask it to.
 
 Remote SSH works for Codex because VS Code runs an extension host on the remote machine. SSH FS-style extensions usually expose files through virtual URIs such as `ssh://...`, `sshfs://...`, or `sftp://...`; many filesystem-heavy tools expect a normal local path and cannot work directly on those URIs. SSH FS Codex bridges that gap.
 
@@ -38,29 +38,32 @@ code --install-extension .tmp-vsix/codex-sshfs-bridge.vsix --force
 
 After the extension is published to the VS Code Marketplace, install it by searching for `Codex SSH FS Bridge` in the VS Code Extensions view.
 
-## Usage In VS Code SSH FS
+## Use Codex With VS Code SSH FS
 
 1. Install and configure an SSH FS extension, such as `Kelvin.vscode-sshfs`.
 2. Open the remote directory through SSH FS and confirm that VS Code Explorer shows the remote workspace folder.
 3. Press `Cmd+Shift+P` to open the Command Palette.
-4. Run `Codex SSH FS Bridge: Sync Workspace to Local Mirror`.
-5. The extension syncs the remote folder into a local mirror and opens the generated `.code-workspace`.
-6. In the local mirror window, open a VS Code terminal.
-7. Run Codex:
+4. Run `Codex SSH FS Bridge: Prepare Workspace for Codex`.
+5. The extension syncs the remote folder into a local mirror and automatically opens the generated `.code-workspace`.
+6. Keep the original SSH FS window connected to the server, and use the VS Code Codex extension in the newly opened local mirror window.
+7. If you use Codex CLI, you can also run it from a VS Code terminal in the local mirror window:
 
 ```bash
 codex
 ```
 
-8. Let Codex edit files in the local mirror.
+8. Let Codex edit files in the local mirror. Codex can read the mirrored workspace files and use the local VS Code workspace/editor context.
 9. Review the changes.
 10. In the mirror window, press `Cmd+Shift+P`.
 11. Run `Codex SSH FS Bridge: Sync Local Mirror Back to Remote` to sync local changes back to the SSH FS remote folder.
 
 ## Commands
 
+- `Codex SSH FS Bridge: Prepare Workspace for Codex`  
+  Recommended entry point. Pulls the SSH FS remote folder into a local mirror and opens the local workspace that the VS Code Codex extension can use.
+
 - `Codex SSH FS Bridge: Sync Workspace to Local Mirror`  
-  Pulls the SSH FS remote folder into a local mirror. You can run it from the remote workspace window or the mirror window to refresh the mirror.
+  Pulls the SSH FS remote folder into a local mirror. You can run it from the remote workspace window or the mirror window to refresh the mirror; by default it also opens the local mirror workspace.
 
 - `Codex SSH FS Bridge: Open Local Mirror Workspace`  
   Opens the generated local mirror workspace.
@@ -96,6 +99,7 @@ codex
 ## Notes
 
 - Sync is explicit, not live. Pull before starting Codex and push after reviewing Codex edits.
+- The Codex extension reads the local mirror, not the `ssh://...`, `sshfs://...`, or `sftp://...` URI directly. This gives Codex a normal local path and IDE context.
 - The default UI is quiet. If you want progress notifications or a persistent status bar shortcut, enable `showProgressNotifications` or `showStatusBarItem` in VS Code settings.
 - When pushing from the mirror, files deleted locally are also deleted from the remote folder.
 - Files larger than `maxFileSizeMb` are skipped.

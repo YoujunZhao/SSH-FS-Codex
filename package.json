@@ -2,7 +2,7 @@
   "name": "codex-sshfs-bridge",
   "displayName": "Codex SSH FS Bridge",
   "description": "Mirror VS Code SSH FS workspaces into a local folder that Codex CLI can use, then sync changes back to the remote workspace.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "youjunzhao",
   "license": "MIT",
   "repository": {
@@ -30,6 +30,7 @@
   ],
   "activationEvents": [
     "onStartupFinished",
+    "onCommand:codexSshfsBridge.prepareCodexWorkspace",
     "onCommand:codexSshfsBridge.syncWorkspaceToMirror",
     "onCommand:codexSshfsBridge.openMirrorWorkspace",
     "onCommand:codexSshfsBridge.syncMirrorToRemote",
@@ -47,6 +48,10 @@
   },
   "contributes": {
     "commands": [
+      {
+        "command": "codexSshfsBridge.prepareCodexWorkspace",
+        "title": "Codex SSH FS Bridge: Prepare Workspace for Codex"
+      },
       {
         "command": "codexSshfsBridge.syncWorkspaceToMirror",
         "title": "Codex SSH FS Bridge: Sync Workspace to Local Mirror"
